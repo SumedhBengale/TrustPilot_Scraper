@@ -2,6 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import time
+import boto3
+
 
 firstReview = {}
 
@@ -74,11 +76,27 @@ def cleanData():
             file.close()
             os.remove("data.json")
             print("All Reviews Found")
+            
+            #Save the reviews to an S3 bucket
+            s3 = boto3.resource('s3')
+            bucket_name = 'trustpilot-bucket'
+            object_key = 'reviews.json'
+
+            # Upload the file to S3 bucket
+            s3.meta.client.upload_file('reviews.json', bucket_name, object_key)
+
+
+            # Generate and print the public URL of the object
+            public_url = f"https://{bucket_name}.s3.amazonaws.com/{object_key}"
+            print("Public URL:", public_url)
+            print("Reviews saved to S3 bucket")
             exit(0)
         
         # Save the updated reviews to reviews.json in a human-readable format (pretty JSON)
         with open('reviews.json', 'w', encoding='utf-8') as f:
+            print("Saving reviews to reviews.json")
             json.dump(existing_reviews, f, indent=4)
+            
         
 
 def savePage(url):
@@ -108,7 +126,7 @@ if __name__ == "__main__":
     #empty the reviews.json file
     with open('reviews.json', 'w', encoding='utf-8') as f:
         f.write("")
-    firstRun_url = 'https://www.trustpilot.com/review/oaktreememorials.com'
+    firstRun_url = 'https://www.trustpilot.com/review/homeandlove.co.uk'
     print("Iteration 1")
     savePage(firstRun_url)
     
@@ -130,6 +148,5 @@ if __name__ == "__main__":
         #wait for 2 seconds
         time.sleep(1 + 0.2 * i)
         i+=1
-            
     
     
